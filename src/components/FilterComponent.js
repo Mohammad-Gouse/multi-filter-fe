@@ -33,7 +33,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
 
   const updateColumnValues = async (index, columnName, search) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/employees/${columnName}?search=${search}&page=1&limit=10`);
+      const response = await axios.get(`http://localhost:3000/api/employees/list?column=${columnName}&search=${search}&page=1&limit=10`);
       const uniqueValues = response.data.map(item => ({
         id: item[columnName],
         label: item[columnName].toString(),
@@ -80,11 +80,11 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
   };
 
   return (
-    <Paper style={{ padding: 16, marginBottom: 16, position: 'absolute', width: '70vw', zIndex: 1 }}>
+    <Paper style={{ padding: 16, marginBottom: 16, position: 'absolute', minWidth: '60vw', zIndex: 1 }}>
       {filters.map((filter, index) => (
-        <Grid container spacing={2} alignItems="center" key={`filter-${index}`} style={{ marginBottom: '12px' }}>
+        <Grid container spacing={2} alignItems="center" key={`filter-${index}`} style={{ marginBottom: '15px' }}>
           {index === 0 && filters.length > 1 && (
-            <Grid item xs={2}>
+            <Grid item xs={6} sm={6} md={2}>
               <TextField
                 select
                 label="Logical Operator"
@@ -102,7 +102,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
             </Grid>
           )}
           {index !== 0 && filters.length > 1 && (
-            <Grid item xs={2}>
+            <Grid item xs={6} sm={6} md={2}>
               <TextField
                 select
                 label="Logical Operator"
@@ -120,7 +120,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
               </TextField>
             </Grid>
           )}
-          <Grid item xs={3}>
+          <Grid item xs={6} sm={6} md={3}>
             <TextField
               select
               label="Column"
@@ -139,7 +139,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
             </TextField>
           </Grid>
          
-          <Grid item xs={6}>
+          <Grid item xs={6} sm={6} md={filters.length > 1? 6 : 8}>
             <Autocomplete
               multiple
               limitTags={3}
@@ -178,37 +178,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
             />
           </Grid>
 
-
-
-          {/* <Grid item xs={4}>
-            <Autocomplete
-              multiple
-              options={columnValues[index] || []}
-              value={filter.value}
-              onChange={(e, newValue) => handleChange(index, 'value', newValue)}
-              getOptionLabel={(option) => option.label}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Value"
-                  placeholder="Select values"
-                  size="small"
-                  onChange={(e) => handleSearchChange(index, e.target.value)}
-                />
-              )}
-              renderOption={(props, option) => (
-                <div {...props} key={option.id}>
-                  <Checkbox
-                    checked={filter.value.map((v) => v.id).includes(option.id)}
-                    style={{ marginRight: 8 }}
-                  />
-                  <ListItemText primary={option.label} />
-                </div>
-              )}
-            />
-          </Grid> */}
-          <Grid item xs={1}>
+          <Grid item xs={1} sm={1} md={1}>
             <IconButton onClick={() => handleRemoveFilter(index)} size="small">
               <DeleteIcon fontSize="small" />
             </IconButton>

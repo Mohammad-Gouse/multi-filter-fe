@@ -8,10 +8,10 @@ import Typography from '@mui/material/Typography';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
 const columns = [
-  { field: 'id', headerName: 'ID', width: 100 },
-  { field: 'name', headerName: 'Name', width: 200 },
-  { field: 'age', headerName: 'Age', width: 150 },
-  { field: 'salary', headerName: 'Salary', width: 200 },
+  { field: 'id', headerName: 'ID', width: 300, align: "center", headerAlign: "center" },
+  { field: 'name', headerName: 'Name', width: 300, align: "center", headerAlign: "center" },
+  { field: 'age', headerName: 'Age', width: 300, align: "right", headerAlign: "right" },
+  { field: 'salary', headerName: 'Salary', width: 300, align: "right", headerAlign: "right" },
 ];
 
 const MultiFilterList = () => {
