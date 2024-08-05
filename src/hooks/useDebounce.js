@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 
 const useDebounce = (value, delay) => {
 
-  console.log("init deb value:", value)
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
@@ -15,7 +14,6 @@ const useDebounce = (value, delay) => {
     };
   }, [value, delay]);
 
-  console.log("debounce value:", debouncedValue)
 
   return debouncedValue;
 };

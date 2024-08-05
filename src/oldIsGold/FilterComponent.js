@@ -23,7 +23,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
     }
   }, [filters]);
 
-  const debouncedSearchTerms = useDebounce(searchTerms, 500); // Set the debounce delay to 500ms
+  const debouncedSearchTerms = useDebounce(searchTerms, 99);
 
   useEffect(() => {
     Object.keys(debouncedSearchTerms).forEach((index) => {
@@ -47,7 +47,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
   };
 
   const handleAddFilter = () => {
-    setFilters([...filters, { column: 'name', operation: 'contains', value: [], logicalOperator: 'and' }]);
+    setFilters([...filters, { column: 'name', operation: 'contains', value: [], logicalOperator: filters[0]?.logicalOperator }]);
     setColumnValues([...columnValues, []]);
   };
 
@@ -65,6 +65,14 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
     if (field === 'column') {
       updateColumnValues(index, value, '');
     }
+
+    if (field === 'logicalOperator' && index === 0) {
+      const updatedFilters = newFilters.map((filter, i) => ({
+        ...filter,
+        logicalOperator: i === 0 ? value : filters[0]?.logicalOperator
+      }));
+      setFilters(updatedFilters)
+    }
   };
 
   const handleSearchChange = (index, search) => {
@@ -72,9 +80,46 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
   };
 
   return (
-    <Paper style={{ padding: 16, marginBottom: 16 }}>
+    <Paper style={{ padding: 16, marginBottom: 16, position: 'absolute', width: '70vw', zIndex: 1 }}>
       {filters.map((filter, index) => (
-        <Grid container spacing={2} alignItems="center" key={`filter-${index}`}>
+        <Grid container spacing={2} alignItems="center" key={`filter-${index}`} style={{ marginBottom: '12px' }}>
+          {index === 0 && filters.length > 1 && (
+            <Grid item xs={2}>
+              <TextField
+                select
+                label="Logical Operator"
+                value={filter.logicalOperator}
+                onChange={(e) => handleChange(index, 'logicalOperator', e.target.value)}
+                SelectProps={{
+                  native: true,
+                }}
+                size="small"
+                fullWidth
+              >
+                <option value="and">AND</option>
+                <option value="or">OR</option>
+              </TextField>
+            </Grid>
+          )}
+          {index !== 0 && filters.length > 1 && (
+            <Grid item xs={2}>
+              <TextField
+                select
+                label="Logical Operator"
+                value={filter.logicalOperator}
+                onChange={(e) => handleChange(index, 'logicalOperator', e.target.value)}
+                SelectProps={{
+                  native: true,
+                }}
+                size="small"
+                fullWidth
+                disabled
+              >
+                <option value="and">AND</option>
+                <option value="or">OR</option>
+              </TextField>
+            </Grid>
+          )}
           <Grid item xs={3}>
             <TextField
               select
@@ -93,23 +138,49 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
               <option value="salary">Salary</option>
             </TextField>
           </Grid>
-          {/* <Grid item xs={2}>
-            <TextField
-              select
-              label="Operation"
-              value={filter.operation}
-              onChange={(e) => handleChange(index, 'operation', e.target.value)}
-              SelectProps={{
-                native: true,
-              }}
+         
+          <Grid item xs={6}>
+            <Autocomplete
+              multiple
+              limitTags={3}
               size="small"
-              fullWidth
-            >
-              <option value="equals">Equals</option>
-              <option value="contains">Contains</option>
-            </TextField>
-          </Grid> */}
-          <Grid item xs={4}>
+              options={columnValues[index] || []}
+              value={filter.value}
+              onChange={(e, newValue) => handleChange(index, 'value', newValue)}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+
+              disableCloseOnSelect
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <li key={key} {...optionProps}>
+                    <Checkbox
+                      // icon={icon}
+                      // checkedIcon={checkedIcon}
+                      style={{ marginRight: 8 }}
+                      checked={filter.value.map((v) => v.id).includes(option.id)}
+                    />
+                    <ListItemText primary={option.label} />
+
+                  </li>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  fullWidth
+                  {...params}
+                  label="Value"
+                  placeholder="Select values"
+                  size="small"
+                  onChange={(e) => handleSearchChange(index, e.target.value)} />
+              )}
+            />
+          </Grid>
+
+
+
+          {/* <Grid item xs={4}>
             <Autocomplete
               multiple
               options={columnValues[index] || []}
@@ -136,47 +207,28 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
                 </div>
               )}
             />
-          </Grid>
+          </Grid> */}
           <Grid item xs={1}>
             <IconButton onClick={() => handleRemoveFilter(index)} size="small">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Grid>
-          {index > 0 && (
-            <Grid item xs={2}>
-              <TextField
-                select
-                label="Logical Operator"
-                value={filter.logicalOperator}
-                onChange={(e) => handleChange(index, 'logicalOperator', e.target.value)}
-                SelectProps={{
-                  native: true,
-                }}
-                size="small"
-                fullWidth
-              >
-                <option value="and">AND</option>
-                <option value="or">OR</option>
-              </TextField>
-            </Grid>
-          )}
+
         </Grid>
       ))}
-      <Grid container justifyContent="space-between" alignItems="center" style={{ marginTop: 16 }}>
+      <Grid container justifyContent="start" alignItems="center" style={{ marginTop: 16 }}>
         <Button
           variant="contained"
           color="primary"
           onClick={handleAddFilter}
           startIcon={<AddCircleIcon />}
           size="small"
+          style={{ marginRight: 10 }}
         >
           Add Filter
         </Button>
         <Button variant="outlined" color="secondary" onClick={onClearFilters} size="small">
           Clear All
-        </Button>
-        <Button variant="contained" color="primary" onClick={onApplyFilters} size="small">
-          Apply Filters
         </Button>
       </Grid>
     </Paper>
