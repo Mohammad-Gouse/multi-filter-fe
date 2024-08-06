@@ -12,14 +12,16 @@ import { AddCircle as AddCircleIcon, Delete as DeleteIcon } from '@mui/icons-mat
 import Autocomplete from '@mui/material/Autocomplete';
 import axios from 'axios';
 import useDebounce from '@/hooks/useDebounce';
+import { lime } from '@mui/material/colors';
 
 const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }) => {
   const [columnValues, setColumnValues] = useState([[]]);
   const [searchTerms, setSearchTerms] = useState({});
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     if (filters.length === 1) {
-      updateColumnValues(0, filters[0].column, '');
+      updateColumnValues(0, filters[0].column, '', limit);
     }
   }, [filters]);
 
@@ -27,13 +29,13 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
 
   useEffect(() => {
     Object.keys(debouncedSearchTerms).forEach((index) => {
-      updateColumnValues(index, filters[index].column, debouncedSearchTerms[index]);
+      updateColumnValues(index, filters[index].column, debouncedSearchTerms[index], limit);
     });
   }, [debouncedSearchTerms]);
 
-  const updateColumnValues = async (index, columnName, search) => {
+  const updateColumnValues = async (index, columnName, search, page) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/employees/list?column=${columnName}&search=${search}&page=1&limit=10`);
+      const response = await axios.get(`http://localhost:3000/api/employees/list?column=${columnName}&search=${search}&page=1&limit=${limit}`);
       const uniqueValues = response.data.map(item => ({
         id: item[columnName],
         label: item[columnName].toString(),
@@ -63,7 +65,8 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
     newFilters[index][field] = value;
     setFilters(newFilters);
     if (field === 'column') {
-      updateColumnValues(index, value, '');
+      setLimit(10) //reset limit when column change
+      updateColumnValues(index, value, '',limit);
     }
 
     if (field === 'logicalOperator' && index === 0) {
@@ -78,6 +81,22 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
   const handleSearchChange = (index, search) => {
     setSearchTerms((prev) => ({ ...prev, [index]: search }));
   };
+
+  const handleScroll = (index, event, column) =>{
+    const bottom = ( Math.floor(event.target.scrollHeight - event.target.scrollTop) === Math.floor(event.target.clientHeight) );
+
+    if(limit >= 250 && bottom){
+      setLimit(250)
+      updateColumnValues(index, column, '', limit)
+      return
+    }
+
+    if(bottom){
+      const newLimit = limit+10;
+      setLimit(newLimit)
+      updateColumnValues(index, column, '', limit)
+    }
+  }
 
   return (
     <Paper style={{ padding: 16, marginBottom: 16, position: 'absolute', minWidth: '60vw', zIndex: 1 }}>
@@ -149,7 +168,9 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
               onChange={(e, newValue) => handleChange(index, 'value', newValue)}
               getOptionLabel={(option) => option.label}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-
+              ListboxProps={{
+                onScroll: (event) => handleScroll(index, event, filter.column)
+              }}
               disableCloseOnSelect
               renderOption={(props, option) => {
                 const { key, ...optionProps } = props;
