@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   TextField,
   Grid,
@@ -16,12 +16,23 @@ import { lime } from '@mui/material/colors';
 
 const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }) => {
   const [columnValues, setColumnValues] = useState([[]]);
+
+  const [namesList, setNamesList] = useState([])
+  const [agesList, setAgesList] = useState([])
+  const [salarysList, setSalaryList] = useState([])
+  const [idList, setIdList] = useState([])
+
   const [searchTerms, setSearchTerms] = useState({});
   const [limit, setLimit] = useState(10);
+  const [pageNumber, setPageNumber] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+
 
   useEffect(() => {
     if (filters.length === 1) {
-      updateColumnValues(0, filters[0].column, '', limit);
+      updateColumnValues(0, filters[0].column, '');
     }
   }, [filters]);
 
@@ -29,24 +40,85 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
 
   useEffect(() => {
     Object.keys(debouncedSearchTerms).forEach((index) => {
-      updateColumnValues(index, filters[index].column, debouncedSearchTerms[index], limit);
+      updateColumnValues(index, filters[index].column, debouncedSearchTerms[index]);
     });
   }, [debouncedSearchTerms]);
 
-  const updateColumnValues = async (index, columnName, search, page) => {
+
+  const updateColumnValues = async (index, columnName, search) => {
+    setLoading(true)
+    setError(false)
     try {
-      const response = await axios.get(`http://localhost:3000/api/employees/list?column=${columnName}&search=${search}&page=1&limit=${limit}`);
-      const uniqueValues = response.data.map(item => ({
-        id: item[columnName],
-        label: item[columnName].toString(),
-      }));
+      let cancel
+      const response = await axios({
+        method: 'GET',
+        url: `http://localhost:3000/api/employees/list`,
+        params: { column: columnName, search: search, limit: 10, page: pageNumber },
+        cancelToken: new axios.CancelToken(c => cancel = c)
+      })
+
+      // const response = await axios.get(`http://localhost:3000/api/employees/list?column=${columnName}&search=${search}&page=1&limit=${limit}`);
+
+      //updating data with id and labels and the data is already coming unique from backend
+      // const uniqueValues = response.data.map(item => ({
+      //   label: item[columnName].toString(),
+      // }));
+
+      const uniqueValues = response.data.map(item => (item[columnName].toString()));
+
+      if (uniqueValues.length > 0) {
+        setHasMore(true)
+      } else {
+        console.log('data not found')
+        setHasMore(false)
+        return
+      }
+
       const newColumnValues = [...columnValues];
-      newColumnValues[index] = uniqueValues;
+
+      console.log(columnName)
+
+      switch (columnName) {
+        case 'id':
+          setIdList([...new Set([...idList, ...uniqueValues])])
+          newColumnValues[index] = [...new Set([...idList, ...uniqueValues])]
+          break
+        case 'name':
+          setNamesList([...new Set([...namesList, ...uniqueValues])])
+          newColumnValues[index] = [...new Set([...namesList, ...uniqueValues])]
+          break
+        case 'age':
+          setAgesList([...new Set([...agesList, ...uniqueValues])])
+          newColumnValues[index] = [...new Set([...agesList, ...uniqueValues])]
+          break
+        case 'salary':
+          setSalaryList([...new Set([...salarysList, ...uniqueValues])])
+          newColumnValues[index] = [...new Set([...salarysList, ...uniqueValues])]
+          break
+
+      }
+
+
+      //newcolumnValues is 2D array which stores Multiple Filter data in array
+      // const newColumnValues = [...columnValues]; 
+
+      //Adding or appending new values coming from backend after updating with id and labels in specify index of 2D array
+      // newColumnValues[index] = uniqueValues;
+      //appending and destructuing here
+
+      // newColumnValues[index] = [...new Set([...newColumnValues[index], ...uniqueValues])]
+
+      //set 2d array with updated values
       setColumnValues(newColumnValues);
     } catch (error) {
       console.error("Error fetching column values", error);
+      setError(true)
+      setLoading(false)
     }
+    setLoading(false)
+    return () => cancel()
   };
+
 
   const handleAddFilter = () => {
     setFilters([...filters, { column: 'name', operation: 'contains', value: [], logicalOperator: filters[0]?.logicalOperator }]);
@@ -65,8 +137,8 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
     newFilters[index][field] = value;
     setFilters(newFilters);
     if (field === 'column') {
-      setLimit(10) //reset limit when column change
-      updateColumnValues(index, value, '',limit);
+      setPageNumber(1)
+      updateColumnValues(index, value, '');
     }
 
     if (field === 'logicalOperator' && index === 0) {
@@ -80,21 +152,16 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
 
   const handleSearchChange = (index, search) => {
     setSearchTerms((prev) => ({ ...prev, [index]: search }));
+    setPageNumber(1)
   };
 
-  const handleScroll = (index, event, column) =>{
-    const bottom = ( Math.floor(event.target.scrollHeight - event.target.scrollTop) === Math.floor(event.target.clientHeight) );
+  const handleScroll = (index, event, column) => {
+    const bottom = (Math.floor(event.target.scrollHeight - event.target.scrollTop) <= Math.floor(event.target.clientHeight));
 
-    if(limit >= 250 && bottom){
-      setLimit(250)
-      updateColumnValues(index, column, '', limit)
-      return
-    }
-
-    if(bottom){
-      const newLimit = limit+10;
-      setLimit(newLimit)
-      updateColumnValues(index, column, '', limit)
+    console.log(bottom, hasMore)
+    if (bottom && hasMore) {
+      setPageNumber(prevPage => prevPage + 1)
+      updateColumnValues(index, column, '')
     }
   }
 
@@ -144,6 +211,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
               select
               label="Column"
               value={filter.column}
+              id="column"
               onChange={(e) => handleChange(index, 'column', e.target.value)}
               SelectProps={{
                 native: true,
@@ -157,17 +225,18 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
               <option value="salary">Salary</option>
             </TextField>
           </Grid>
-         
-          <Grid item xs={6} sm={6} md={filters.length > 1? 6 : 8}>
+
+          <Grid item xs={6} sm={6} md={filters.length > 1 ? 6 : 8}>
             <Autocomplete
+              loading
               multiple
               limitTags={3}
               size="small"
               options={columnValues[index] || []}
               value={filter.value}
               onChange={(e, newValue) => handleChange(index, 'value', newValue)}
-              getOptionLabel={(option) => option.label}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
+              getOptionLabel={(option) => option}
+              isOptionEqualToValue={(option, value) => option === value}
               ListboxProps={{
                 onScroll: (event) => handleScroll(index, event, filter.column)
               }}
@@ -180,10 +249,9 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
                       // icon={icon}
                       // checkedIcon={checkedIcon}
                       style={{ marginRight: 8 }}
-                      checked={filter.value.map((v) => v.id).includes(option.id)}
+                      checked={filter.value.includes(option)}
                     />
-                    <ListItemText primary={option.label} />
-
+                    <ListItemText primary={option} />
                   </li>
                 );
               }}
@@ -197,6 +265,51 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
                   onChange={(e) => handleSearchChange(index, e.target.value)} />
               )}
             />
+
+            {/* <Autocomplete
+      loading
+      multiple
+      limitTags={3}
+      size="small"
+      options={columnValues[index] || []}
+      value={filter.value}
+      onChange={(e, newValue) => handleChange(index, 'value', newValue)}
+      getOptionLabel={(option) => option}
+      isOptionEqualToValue={(option, value) => option === value}
+      // ListboxProps={{
+      //   onScroll: (event) => handleScroll(index, event, filter.column),
+      // }}
+      disableCloseOnSelect
+      renderOption={(props, option, optionIndex) => {
+        const { key, ...optionProps } = props;
+        const isLastOption = optionIndex.index === columnValues[index].length - 1;
+
+
+        return (
+          <li
+            key={key}
+            {...optionProps}
+            ref={isLastOption ? lastOptionRef : null}
+          >
+            <Checkbox
+              style={{ marginRight: 8 }}
+              checked={filter.value.includes(option)}
+            />
+            <ListItemText primary={option} />
+          </li>
+        );
+      }}
+      renderInput={(params) => (
+        <TextField
+          fullWidth
+          {...params}
+          label="Value"
+          placeholder="Select values"
+          size="small"
+          onChange={(e) => handleSearchChange(index, e.target.value)}
+        />
+      )}
+    /> */}
           </Grid>
 
           <Grid item xs={1} sm={1} md={1}>

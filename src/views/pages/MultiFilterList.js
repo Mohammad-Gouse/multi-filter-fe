@@ -1,17 +1,40 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
-import { DataGrid } from '@mui/x-data-grid';
 import FilterComponent from '@/components/FilterComponent';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import PushPinIcon from '@mui/icons-material/PushPin';
 
-const columns = [
-  { field: 'id', headerName: 'ID', width: 300, align: "center", headerAlign: "center" },
-  { field: 'name', headerName: 'Name', width: 300, align: "center", headerAlign: "center" },
-  { field: 'age', headerName: 'Age', width: 300, align: "right", headerAlign: "right" },
-  { field: 'salary', headerName: 'Salary', width: 300, align: "right", headerAlign: "right" },
+
+import { DataGrid, GridColumnMenu } from '@mui/x-data-grid';
+import { Box, ListItemIcon, MenuItem, ListItemText } from '@mui/material';
+
+// const columns = [
+//   { field: 'id', headerName: 'ID', width: 300, align: "center", headerAlign: "center" },
+//   { field: 'name', headerName: 'Name', width: 300, align: "center", headerAlign: "center" },
+//   { field: 'age', headerName: 'Age', width: 300, align: "right", headerAlign: "right" },
+//   { field: 'salary', headerName: 'Salary', width: 300, align: "right", headerAlign: "right" },
+// ];
+
+const initialColumns = [
+  {
+    field: 'id',
+    headerName: 'ID',
+    width: 350,
+    headerClassName: 'stickyCells',
+    cellClassName: 'stickyCells',
+  },
+  { 
+    field: 'name',
+    headerName: 'Name',
+    width: 350,
+    headerClassName: '',
+    cellClassName: '',
+  },
+  { field: 'age', headerName: 'Age', width: 350 },
+  { field: 'salary', headerName: 'Salary', width: 350 },
 ];
 
 const MultiFilterList = () => {
@@ -25,6 +48,31 @@ const MultiFilterList = () => {
   const [loading, setLoading] = useState(false); // Loading state
   const [error, setError] = useState(null); // Error state
 
+  const [columns, setColumns] = useState(initialColumns);
+
+
+  const reorderColumn = (field) => {
+    setColumns(prevColumns => {
+      const columnToMove = prevColumns.find(col => col.field === field);
+      const otherColumns = prevColumns.filter(col => col.field !== field);
+
+      const updatedColumns = [
+        { 
+          ...columnToMove,
+          headerClassName: 'stickyCells',
+          cellClassName: 'stickyCells',
+        },
+        ...otherColumns.map(col => ({
+          ...col,
+          headerClassName: '',
+          cellClassName: '',
+        }))
+      ];
+
+      return updatedColumns;
+    });
+  };
+
   // Fetch data based on pagination model and filters
   const fetchData = async () => {
     setLoading(true); // Set loading to true
@@ -35,7 +83,7 @@ const MultiFilterList = () => {
         limit: paginationModel.pageSize,
         filters: filters.reduce((acc, filter) => {
           if (filter.value.length > 0) {
-            acc[filter.column] = filter.value.map(v => v.id);
+            acc[filter.column] = filter.value;
           }
           return acc;
         }, {}),
@@ -72,6 +120,42 @@ const MultiFilterList = () => {
     return rowCountRef.current;
   }, [totalRecords]);
 
+  function CustomUserItem(props) {
+    const { myCustomHandler, myCustomValue } = props;
+    return (
+      <MenuItem onClick={myCustomHandler}>
+        <ListItemIcon>
+          <PushPinIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText>{myCustomValue}</ListItemText>
+      </MenuItem>
+    );
+  }
+
+  function CustomColumnMenu(props) {
+    return (
+      <GridColumnMenu
+        {...props}
+        slots={{
+          // Add new item
+          columnMenuUserItem: CustomUserItem,
+        }}
+        slotProps={{
+          columnMenuUserItem: {
+            // set `displayOrder` for new item
+            displayOrder: 15,
+            // pass additional props
+            myCustomValue: 'Pin Column',
+            myCustomHandler: () => {
+              reorderColumn(props.colDef.field)
+            } 
+          },
+        }}
+      />
+    );
+  }
+
+
   return (
     <div style={{ height: 600, width: '100%', margin:'20px 0px' }}>
       <Button
@@ -105,6 +189,7 @@ const MultiFilterList = () => {
         rows={data}
         columns={columns}
         rowCount={rowCount}
+        slots={{ columnMenu: CustomColumnMenu }}
         pagination
         paginationMode="server"
         pageSize={paginationModel.pageSize}
@@ -114,6 +199,15 @@ const MultiFilterList = () => {
         loading={loading} // Show loading state
         disableSelectionOnClick
         style={{ height: '450px' }}
+        sx={{
+          '& .stickyCells': {
+            backgroundColor: 'white',
+            position: 'sticky',
+            left: 0,
+            zIndex: 1,
+            boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
+          }
+        }}
       />
     </div>
   );
