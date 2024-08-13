@@ -11,13 +11,6 @@ import PushPinIcon from '@mui/icons-material/PushPin';
 import { DataGrid, GridColumnMenu } from '@mui/x-data-grid';
 import { Box, ListItemIcon, MenuItem, ListItemText } from '@mui/material';
 
-// const columns = [
-//   { field: 'id', headerName: 'ID', width: 300, align: "center", headerAlign: "center" },
-//   { field: 'name', headerName: 'Name', width: 300, align: "center", headerAlign: "center" },
-//   { field: 'age', headerName: 'Age', width: 300, align: "right", headerAlign: "right" },
-//   { field: 'salary', headerName: 'Salary', width: 300, align: "right", headerAlign: "right" },
-// ];
-
 const initialColumns = [
   {
     field: 'id',
@@ -164,7 +157,6 @@ const MultiFilterList = () => {
         onClick={() => setShowFilter(!showFilter)}
         style={{ marginBottom: 16 }}
       >
-        {/* {showFilter ? 'Hide Filter' : 'Show Filter'} */}
        <FilterListIcon></FilterListIcon>
       </Button>
       {showFilter && (
@@ -175,11 +167,6 @@ const MultiFilterList = () => {
           onClearFilters={handleClearFilters}
         />
       )}
-      {/* {loading && (
-        <div style={{ textAlign: 'center', padding: 20 }}>
-          <CircularProgress />
-        </div>
-      )} */}
       {error && (
         <Typography color="error" style={{ textAlign: 'center', padding: 20 }}>
           {error}
@@ -206,7 +193,7 @@ const MultiFilterList = () => {
             left: 0,
             zIndex: 1,
             boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-          }
+          },
         }}
       />
     </div>

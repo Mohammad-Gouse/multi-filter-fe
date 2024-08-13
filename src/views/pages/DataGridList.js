@@ -10,30 +10,36 @@ const initialColumns = [
     field: 'id',
     headerName: 'ID',
     width: 350,
-    headerClassName: 'stickyCells',
-    cellClassName: 'stickyCells',
+    headerClassName: `idClass`,
+    cellClassName: 'idClass',
   },
-  { 
+  {
     field: 'name',
     headerName: 'Name',
     width: 350,
-    // headerClassName: 'stickyCells2',
-    // cellClassName: 'stickyCells2',
+    headerClassName: 'nameClass',
+    cellClassName: 'nameClass',
   },
-  { field: 'age', headerName: 'Age', width: 350 },
-  { field: 'salary', headerName: 'Salary', width: 350 },
+  {
+    field: 'age',
+    headerName: 'Age',
+    width: 350,
+    headerClassName: 'ageClass',
+    cellClassName: 'ageClass'
+  },
+  {
+    field: 'salary',
+    headerName: 'Salary',
+    width: 350,
+    headerClassName: 'salaryClass',
+    cellClassName: 'salaryClass'
+  },
 ];
 
-// const columns = [
-//   { field: 'id', headerName: 'ID', width: 200 },
-//   { field: 'name', headerName: 'Name', width: 200 },
-//   { field: 'age', headerName: 'Age', width: 500 },
-//   { field: 'salary', headerName: 'Salary', width: 500 },
-// ];
 
 
 
-  // Function to handle column reordering
+// Function to handle column reordering
 
 
 const DataGridList = () => {
@@ -44,6 +50,40 @@ const DataGridList = () => {
 
   const [columns, setColumns] = useState(initialColumns);
 
+  const [isPin, setIsPin] = useState(false)
+  const [pinText, setPinText] = useState('Pin Column')
+
+  const [currentLeft, setCurrentLeft] = useState(0)
+  const [countPin, setCountPin] = useState(0)
+  const [countUnPin, setCountUnPin] = useState(0)
+ 
+  const [allColumnState, setAllColumnState] = useState([
+    {
+      field: 'id',
+      style: {},
+      isPin: false,
+      width: 350
+    },
+    {
+      field: 'name',
+      style: {},
+      isPin: false,
+      width: 350
+    },
+    {
+      field: 'age',
+      style: {},
+      isPin: false,
+      width: 350
+    },
+    {
+      field: 'salary',
+      style: {},
+      isPin: false,
+      width: 350
+    }
+  ])
+
 
   const reorderColumn = (field) => {
     setColumns(prevColumns => {
@@ -51,7 +91,7 @@ const DataGridList = () => {
       const otherColumns = prevColumns.filter(col => col.field !== field);
 
       const updatedColumns = [
-        { 
+        {
           ...columnToMove,
           headerClassName: 'stickyCells',
           cellClassName: 'stickyCells',
@@ -66,6 +106,7 @@ const DataGridList = () => {
       return updatedColumns;
     });
   };
+
 
 
   const fetchData = async () => {
@@ -87,18 +128,104 @@ const DataGridList = () => {
 
 
   function CustomUserItem(props) {
-    const { myCustomHandler, myCustomValue } = props;
+    const { pinHandler, pinText } = props;
     return (
-      <MenuItem onClick={myCustomHandler}>
+      <MenuItem onClick={pinHandler}>
         <ListItemIcon>
           <PushPinIcon fontSize="small" />
         </ListItemIcon>
-        <ListItemText>{myCustomValue}</ListItemText>
+        <ListItemText>{pinText}</ListItemText>
       </MenuItem>
     );
   }
 
+  function getCurrentLeft() {
+    return currentLeft
+  }
+
+
+
+
+  function pinColumn(field) {
+    allColumnState.forEach((column, index) => {
+      if (column.field == field) {
+        column.isPin = !column.isPin
+        setPinText(column.isPin ? 'Un pin' : 'Pin')
+        setCurrentLeft(column.isPin ? currentLeft + 350 : currentLeft - 350)
+        column.style = column.isPin ?
+        {
+          backgroundColor: 'white',
+          position: 'sticky',
+          left: getCurrentLeft(),
+          zIndex: 1,
+          boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
+        } : {}
+        
+      }
+    })
+    reorderColumnSticky(field)
+    reorderIfExistOne()
+    // reorderIfExistMore()
+  }
+
+  function reorderIfExistOne(){
+    let countAllPin = 0
+    let field
+    allColumnState.forEach((col)=>{
+      if(col.isPin == true){
+        countAllPin += 1
+        field = col.field
+      }
+    })
+
+    if(countAllPin == 1){
+      allColumnState.forEach((col)=>{
+        if(col.field == field){
+          col.style.left = 0;
+        }
+      })
+    }
+  }
+
+  function reorderIfExistMore(){
+    allColumnState.forEach((col, index)=>{
+
+      console.log(col.isPin)
+      // if(col.isPin){
+      //   setCountPin(p => p+1)
+      // } else {
+      //   setCountUnPin(p => p+1)
+      // }
+    })
+
+    console.log(countPin, countUnPin)
+  }
+
+  const reorderColumnSticky = (field) => {
+    setColumns(prevColumns => {
+      // const selectedColumn = prevColumns.filter(col => col.field == field);
+      const unPinColumns = columns.filter(col => {
+        const correspondingState = allColumnState.find(state => state.field === col.field);
+        return correspondingState && !correspondingState.isPin;
+      });
+
+      const pinColumns = columns.filter((col, index) => {
+        const correspondingState = allColumnState.find(state => state.field === col.field);
+        return correspondingState && correspondingState.isPin;
+      });
+      const reorderedColumns = [...pinColumns, ...unPinColumns];
+      return reorderedColumns;
+    });
+  };
+
+
   function CustomColumnMenu(props) {
+
+    allColumnState.forEach((column) => {
+      if (column.field == props.colDef.field) {
+        setPinText(column.isPin ? 'Un pin' : 'Pin')
+      }
+    })
     return (
       <GridColumnMenu
         {...props}
@@ -111,14 +238,46 @@ const DataGridList = () => {
             // set `displayOrder` for new item
             displayOrder: 15,
             // pass additional props
-            myCustomValue: 'Pin Column',
-            myCustomHandler: () => {
-              reorderColumn(props.colDef.field)
-            } 
+            pinText: pinText,
+            pinHandler: () => {
+              pinColumn(props.colDef.field)
+            }
           },
         }}
       />
     );
+  }
+
+  const fieldClasses =
+  {
+    idClass: {
+      // backgroundColor: 'white',
+      // position: 'sticky',
+      // left: 0,
+      // zIndex: 1,
+      // boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
+    },
+    nameClass: {
+    },
+    ageClass: {
+    },
+    salaryClass: {
+
+    },
+  }
+
+  const columnStickyAcitive = {
+    isFirstActive: true,
+    isSecondActive: false,
+    isThirdActive: false,
+    isFourthActive: false
+  }
+
+  const stickyState = {
+    '& .idClass': allColumnState.find(column => column.field === 'id')?.style,
+    '& .nameClass': allColumnState.find(column => column.field === 'name')?.style,
+    '& .ageClass': allColumnState.find(column => column.field === 'age')?.style,
+    '& .salaryClass': allColumnState.find(column => column.field === 'salary')?.style
   }
 
 
@@ -139,22 +298,7 @@ const DataGridList = () => {
         disableSelectionOnClick
         columnBuffer={columns.length}
         getRowClassName={params => 'fix-row'}
-        sx={{
-          '& .stickyCells': {
-            backgroundColor: 'white',
-            position: 'sticky',
-            left: 0,
-            zIndex: 1,
-            boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-          },
-          '& .stickyCells2': {
-            backgroundColor: 'white',
-            position: 'sticky',
-            left: 350,
-            zIndex: 1,
-            boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-          }
-        }}
+        sx={stickyState}
 
       />
     </Box>
