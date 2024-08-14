@@ -56,6 +56,7 @@ const DataGridList = () => {
   const [currentLeft, setCurrentLeft] = useState(0)
   const [countPin, setCountPin] = useState(0)
   const [countUnPin, setCountUnPin] = useState(0)
+
  
   const [allColumnState, setAllColumnState] = useState([
     {
@@ -159,7 +160,12 @@ const DataGridList = () => {
     }
 
     const deletedColumn = allColumnState.filter(col => col.field === field)
+
+    const deletedColumnState = {}
+    deletedColumnState['left'] = deletedColumn[0]?.style?.left
+    
     const maxLeftColumn = allColumnState.filter(col => col.field === maxField)
+
 
     allColumnState.forEach((column, index) => {
       if (column.field == field) {
@@ -178,13 +184,14 @@ const DataGridList = () => {
       }
     })
 
+
     reorderColumnSticky(field)
 
     const currentPin = allColumnState.filter(column => column.isPin).length;
     const currentUnpin = allColumnState.filter(column => !column.isPin).length;
 
     if(currentPin > 1){
-      reorderIfExistMore(currentPin, currentUnpin, field, deletedColumn, maxLeftColumn)
+      reorderIfExistMore(currentPin, currentUnpin, field, deletedColumn, maxLeftColumn, deletedColumnState)
     }{
       reorderIfExistOne()
     }
@@ -210,50 +217,32 @@ const DataGridList = () => {
     }
   }
 
-  function reorderIfExistMore(currentPin, currentUnpin, field, deletedColumn, maxLeftColumn){
-    // const currentPin = allColumnState.filter(column => column.isPin).length;
-    // const currentUnpin = allColumnState.filter(column => !column.isPin).length;
+  function reorderIfExistMore(currentPin, currentUnpin, field, deletedColumn, maxLeftColumn, deletedColumnState){
     setCountPin(currentPin)
     setCountUnPin(currentUnpin)
 
+    console.log(columns, allColumnState)
+
     if ( (currentPin < countPin)){
-      // allColumnState.forEach((col)=>{
-      //   if(col.isPin){
-      //     col.style.left -= 350
-      //   }
-      // })
 
-      // let max = -1
-      // let maxField = ''
-      // for (let i=0; i<allColumnState.length; i++){
-      //   if(allColumnState[i].style.left > max){
-      //     max = allColumnState[i].style.left
-      //     maxField = allColumnState[i].field
-      //   }
-      // }
-
-      // const deletedColumn = allColumnState.filter(col => col.field === field)
-      // const maxLeftColumn = allColumnState.filter(col => col.field === maxField)
-
-      if(deletedColumn[0].field != maxLeftColumn[0].field){
-        // maxLeftColumn[0].style.left = deletedColumn[0].style.left
-
-        allColumnState.forEach((col)=>{
-          if (col.field == maxLeftColumn[0].field){
-            // col.style.left = deletedColumn[0].style.left
-            console.log(col.style.left, deletedColumn[0])
-          }
-        })
+      if(deletedColumn[0].field == maxLeftColumn[0].field){
+        return
       }
+      allColumnState.forEach((col)=>{
+        if(col.isPin && col.style?.left >= 350){
+          col.style.left -= 350
+        }
+      })
 
+    
+      // if(deletedColumn[0].field != maxLeftColumn[0].field){
 
-
-      // console.log(currentField, maxField, max)
-
-      // for(let i=0; i<columns.length; i++){
-      //   if (allColumnState[i].isPin){
-      //     console.log(currentField )
-      //   }
+      //   allColumnState.forEach((col)=>{
+      //     if (col.field == maxLeftColumn[0].field){
+      //       col.style.left = deletedColumnState.left
+      //       console.log(col.style.left, deletedColumn[0], deletedColumnState.left)
+      //     }
+      //   })
       // }
 
     }
