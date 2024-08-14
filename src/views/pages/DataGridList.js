@@ -83,6 +83,7 @@ const DataGridList = () => {
       width: 350
     }
   ])
+  
 
 
   const reorderColumn = (field) => {
@@ -147,6 +148,19 @@ const DataGridList = () => {
 
 
   function pinColumn(field) {
+
+    let max = -1
+    let maxField = ''
+    for (let i=0; i<allColumnState.length; i++){
+      if(allColumnState[i].style.left > max){
+        max = allColumnState[i].style.left
+        maxField = allColumnState[i].field
+      }
+    }
+
+    const deletedColumn = allColumnState.filter(col => col.field === field)
+    const maxLeftColumn = allColumnState.filter(col => col.field === maxField)
+
     allColumnState.forEach((column, index) => {
       if (column.field == field) {
         column.isPin = !column.isPin
@@ -163,9 +177,18 @@ const DataGridList = () => {
         
       }
     })
+
     reorderColumnSticky(field)
-    reorderIfExistOne()
-    // reorderIfExistMore()
+
+    const currentPin = allColumnState.filter(column => column.isPin).length;
+    const currentUnpin = allColumnState.filter(column => !column.isPin).length;
+
+    if(currentPin > 1){
+      reorderIfExistMore(currentPin, currentUnpin, field, deletedColumn, maxLeftColumn)
+    }{
+      reorderIfExistOne()
+    }
+    
   }
 
   function reorderIfExistOne(){
@@ -187,18 +210,55 @@ const DataGridList = () => {
     }
   }
 
-  function reorderIfExistMore(){
-    allColumnState.forEach((col, index)=>{
+  function reorderIfExistMore(currentPin, currentUnpin, field, deletedColumn, maxLeftColumn){
+    // const currentPin = allColumnState.filter(column => column.isPin).length;
+    // const currentUnpin = allColumnState.filter(column => !column.isPin).length;
+    setCountPin(currentPin)
+    setCountUnPin(currentUnpin)
 
-      console.log(col.isPin)
-      // if(col.isPin){
-      //   setCountPin(p => p+1)
-      // } else {
-      //   setCountUnPin(p => p+1)
+    if ( (currentPin < countPin)){
+      // allColumnState.forEach((col)=>{
+      //   if(col.isPin){
+      //     col.style.left -= 350
+      //   }
+      // })
+
+      // let max = -1
+      // let maxField = ''
+      // for (let i=0; i<allColumnState.length; i++){
+      //   if(allColumnState[i].style.left > max){
+      //     max = allColumnState[i].style.left
+      //     maxField = allColumnState[i].field
+      //   }
       // }
-    })
 
-    console.log(countPin, countUnPin)
+      // const deletedColumn = allColumnState.filter(col => col.field === field)
+      // const maxLeftColumn = allColumnState.filter(col => col.field === maxField)
+
+      if(deletedColumn[0].field != maxLeftColumn[0].field){
+        // maxLeftColumn[0].style.left = deletedColumn[0].style.left
+
+        allColumnState.forEach((col)=>{
+          if (col.field == maxLeftColumn[0].field){
+            // col.style.left = deletedColumn[0].style.left
+            console.log(col.style.left, deletedColumn[0])
+          }
+        })
+      }
+
+
+
+      // console.log(currentField, maxField, max)
+
+      // for(let i=0; i<columns.length; i++){
+      //   if (allColumnState[i].isPin){
+      //     console.log(currentField )
+      //   }
+      // }
+
+    }
+
+
   }
 
   const reorderColumnSticky = (field) => {
@@ -213,7 +273,24 @@ const DataGridList = () => {
         const correspondingState = allColumnState.find(state => state.field === col.field);
         return correspondingState && correspondingState.isPin;
       });
+
+      // console.log(pinColumns)
       const reorderedColumns = [...pinColumns, ...unPinColumns];
+
+      // allColumnState.forEach((col, index)=>{
+      //   if(col.isPin){
+      //     col.style.left = 0
+      //   }
+      // })
+
+      // let left = 0
+      // for(let i = 0; i<allColumnState.length; i++){
+      //   if (allColumnState[i].isPin){
+      //     allColumnState[i].style.left = left
+      //     left += 350
+      //   }
+      // }
+
       return reorderedColumns;
     });
   };
