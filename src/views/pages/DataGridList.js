@@ -36,28 +36,19 @@ const initialColumns = [
   },
 ];
 
-
-
-
-// Function to handle column reordering
-
-
 const DataGridList = () => {
+
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
 
   const [columns, setColumns] = useState(initialColumns);
-
-  const [isPin, setIsPin] = useState(false)
-  const [pinText, setPinText] = useState('Pin Column')
-
+  const [pinText, setPinText] = useState('Pin')
   const [currentLeft, setCurrentLeft] = useState(0)
   const [countPin, setCountPin] = useState(0)
   const [countUnPin, setCountUnPin] = useState(0)
 
- 
   const [allColumnState, setAllColumnState] = useState([
     {
       field: 'id',
@@ -85,29 +76,29 @@ const DataGridList = () => {
     }
   ])
   
+// const [isPin, setIsPin] = useState(false)
 
+  // const reorderColumn = (field) => {
+  //   setColumns(prevColumns => {
+  //     const columnToMove = prevColumns.find(col => col.field === field);
+  //     const otherColumns = prevColumns.filter(col => col.field !== field);
 
-  const reorderColumn = (field) => {
-    setColumns(prevColumns => {
-      const columnToMove = prevColumns.find(col => col.field === field);
-      const otherColumns = prevColumns.filter(col => col.field !== field);
+  //     const updatedColumns = [
+  //       {
+  //         ...columnToMove,
+  //         headerClassName: 'stickyCells',
+  //         cellClassName: 'stickyCells',
+  //       },
+  //       ...otherColumns.map(col => ({
+  //         ...col,
+  //         headerClassName: '',
+  //         cellClassName: '',
+  //       }))
+  //     ];
 
-      const updatedColumns = [
-        {
-          ...columnToMove,
-          headerClassName: 'stickyCells',
-          cellClassName: 'stickyCells',
-        },
-        ...otherColumns.map(col => ({
-          ...col,
-          headerClassName: '',
-          cellClassName: '',
-        }))
-      ];
-
-      return updatedColumns;
-    });
-  };
+  //     return updatedColumns;
+  //   });
+  // };
 
 
 
@@ -145,9 +136,6 @@ const DataGridList = () => {
     return currentLeft
   }
 
-
-
-
   function pinColumn(field) {
 
     let max = -1
@@ -178,7 +166,7 @@ const DataGridList = () => {
           position: 'sticky',
           left: getCurrentLeft(),
           zIndex: 1,
-          boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
+          boxShadow: '4px 0px 6px -2px rgba(0, 0, 0, 0.1)',
         } : {}
         
       }
@@ -314,36 +302,28 @@ const DataGridList = () => {
     );
   }
 
-  const fieldClasses =
-  {
-    idClass: {
-      // backgroundColor: 'white',
-      // position: 'sticky',
-      // left: 0,
-      // zIndex: 1,
-      // boxShadow: '4px 0px 6px rgba(0, 0, 0, 0.1)',
-    },
-    nameClass: {
-    },
-    ageClass: {
-    },
-    salaryClass: {
-
-    },
-  }
-
-  const columnStickyAcitive = {
-    isFirstActive: true,
-    isSecondActive: false,
-    isThirdActive: false,
-    isFourthActive: false
-  }
-
   const stickyState = {
     '& .idClass': allColumnState.find(column => column.field === 'id')?.style,
     '& .nameClass': allColumnState.find(column => column.field === 'name')?.style,
     '& .ageClass': allColumnState.find(column => column.field === 'age')?.style,
-    '& .salaryClass': allColumnState.find(column => column.field === 'salary')?.style
+    '& .salaryClass': allColumnState.find(column => column.field === 'salary')?.style,
+    '& .fix-row': {
+                    '&:hover': {
+                      backgroundColor: 'rgb(245,245,247)',
+                      '& .MuiDataGrid-cell:first-child': {
+                        backgroundColor: 'rgb(245,245,247)'
+                      },
+                      '& .MuiDataGrid-cell:nth-child(2)': {
+                        backgroundColor: 'rgb(245,245,247)'
+                      },
+                      '& .MuiDataGrid-cell:nth-child(3)': {
+                        backgroundColor: 'rgb(245,245,247)'
+                      },
+                      '& .MuiDataGrid-cell:nth-child(4)': {
+                        backgroundColor: 'rgb(245,245,247)'
+                      }
+                    },
+                  },
   }
 
 
@@ -361,11 +341,10 @@ const DataGridList = () => {
         onPageChange={(newPage) => setPage(newPage + 1)}
         onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
         loading={!data.length}
-        disableSelectionOnClick
         columnBuffer={columns.length}
         getRowClassName={params => 'fix-row'}
         sx={stickyState}
-
+        disableRowSelectionOnClick 
       />
     </Box>
   );

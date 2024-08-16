@@ -71,7 +71,6 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
       } else {
         console.log('data not found')
         setHasMore(false)
-        return
       }
 
       const newColumnValues = [...columnValues];
@@ -90,6 +89,7 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
         case 'age':
           setAgesList([...new Set([...agesList, ...uniqueValues])])
           newColumnValues[index] = [...new Set([...agesList, ...uniqueValues])]
+          console.log([...new Set([...agesList, ...uniqueValues])])
           break
         case 'salary':
           setSalaryList([...new Set([...salarysList, ...uniqueValues])])
@@ -138,6 +138,8 @@ const FilterComponent = ({ filters, setFilters, onApplyFilters, onClearFilters }
     setFilters(newFilters);
     if (field === 'column') {
       setPageNumber(1)
+
+      console.log(index)
       updateColumnValues(index, value, '');
     }
 
